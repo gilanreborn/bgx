@@ -1,0 +1,166 @@
+<html>
+<head>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			font-size: 24px;
+		}
+		div {
+			padding: 20px;
+			margin: 10px;
+		}
+		.counter span {
+			padding: 10px;
+		}
+		input {
+			padding: 10px;
+			width: 400px;
+		}
+		span.button {
+			border: 1px solid black;
+			border-radius: 10px;
+			height: 20px;
+			width: 20px;
+			margin: 10px;
+			user-select: none;
+		}
+		.button:hover {
+			cursor: pointer;
+		}
+		.done {
+			text-decoration: line-through;
+		}
+	</style>
+	<script src="./bgx.js" ></script>
+</head>
+<body>
+	<div bgx-map='{"style.color": "style.color"}'>
+		<span>Hi, </span><span bgx="intro" bgx-map='{"innerText": "name"}'></span>
+	</div>
+	<div class="counter">
+		<div>
+			<span class="minus button" onclick="bgx.fire('DECREMENT')">-</span>
+			<span bgx='counter1' bgx-map='{"innerText": "counter"}'>0</span>
+			<span class="plus button" onclick='bgx.fire("INCREMENT")' >+</span>
+		</div>
+		
+		<div>
+			<span class="plus-five button" onclick="bgx.fire('ADD5')">+5</span>
+			<span class="clear button" onclick="bgx.fire('CLEAR')">CLEAR</span>
+		</div>
+	</div>
+	<div>
+		<input onkeyup="bgx.fire('NAME')" placeholder="Your Name Here..." />
+	</div>
+	<div>
+		<span onclick="bgx.fire({ 'SET_COLOR':['blue'] })" >Blue</span>
+		<span onclick="bgx.fire({ 'SET_COLOR':['red'] })"  >Red</span>
+		<span onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
+	</div>
+	<div>
+		<ul bgx="ul" bgx-map='{"1": "history"}' bgx-updater="HISTORY">
+		</ul>
+	</div>
+	<div class="todos">
+		<h1 bgx-map='{"style.color": "style.color"}'>TODOS:</h1>
+		<div class="todo-list">
+			<ul bgx-map='["todos", "filter"]' bgx-updater="FILTER_TODOS"></ul>
+		</div>
+		<div class="todo-controls">
+			<input bgx="todoInput" bgx-map onkeyup="bgx.fire('MAYBE_ADD_TODO')"/>
+			<button onclick="bgx.fire('ADD_TODO')">ADD TODO</button>
+		</div>
+		<div class="todo-filters">
+			<span>Filter Todos:</span>
+			<input bgx-map='{"value": "filter"}' onkeyup="bgx.fire('APPLY_FILTER')" />
+		</div>
+	</div>
+	</div>
+	<script>
+		const renderTodo = (item, idx) => {
+			return `
+				<li bgx-key="${idx}"
+					onclick="bgx.fire({ 'TOGGLE_TODO_VIEW': [${idx}] })"
+					class="${item.done ? 'done' : 'todo'}"
+				>
+					${item.text}
+				</li>
+			`;
+		};
+
+		const initialState = { // initial state
+			history: [],
+			todos: [],
+			filter: '',
+			counter: 0,
+			name: "Gilan",
+			style: { color: "blue" }
+		};
+		const events = { // events
+			'INCREMENT': function(el) {
+				var counter = bgx.state.counter + 1;
+				var history = bgx.state.history;
+				bgx.setState({ counter, history: [counter, ...history] });
+			},
+			'DECREMENT': function(el) { 
+				var counter = bgx.state.counter - 1;
+				var history = bgx.state.history;
+				bgx.setState({ counter, history: [counter, ...history] });
+			},
+			'ADD5': function(el) {
+				var counter = bgx.state.counter + 5;
+				var history = bgx.state.history;
+				bgx.setState({ counter, history: [counter, ...history] });
+			},
+			'CLEAR': function() {
+				bgx.setState({ counter: 0, history: [] });
+			},
+			'NAME': function() {
+				var name = this.value;
+				bgx.setState({ name });
+			},
+			'SET_COLOR': function(color) {
+				bgx.setState({ style: { color } });
+			},
+			'TOGGLE_TODO_VIEW': function(idx) {
+				var oldTodo = bgx.state.todos[idx];
+				var newTodo = Object.assign({}, bgx.state.todos[idx], { done: !oldTodo.done });
+				var newTodos = bgx.state.todos.map((td, i) => i === idx ? newTodo : td);
+				bgx.setState({ todos: newTodos });
+			},
+			'ADD_TODO': function() {
+				var text = bgx.dom.todoInput.value;
+				var newTodo = { text, done: false };
+				bgx.setState({ todos: [...bgx.state.todos, newTodo]});
+			},
+			'MAYBE_ADD_TODO': function() {
+				debugger;
+				if ( event.key === 'Enter' ) { bgx.fire('ADD_TODO') }
+			},
+			'APPLY_FILTER': function() {
+				var filter = this.value;
+				bgx.setState({ filter });
+			},
+		};
+
+		const updaters = { // updaters
+			'HISTORY': function(state) {
+				var children = state.history.map(item => `<li>${item}</li>`);
+				this.innerHTML = children.join('');
+			},
+			'TODOS': function(state) {
+				var todoList = state.todos.map(renderTodo);
+				this.innerHTML = todoList.join('');
+			},
+			'FILTER_TODOS': function(state) {
+				var filt = state.filter;
+				var todoList = state.todos.filter(todo => todo.text.indexOf(filt) > -1).map(renderTodo);
+				this.innerHTML = todoList.join('');
+			},
+		};
+
+		bgx.init(initialState, events, updaters);
+	</script>
+</body>
+</html>
