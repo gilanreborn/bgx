@@ -22,7 +22,8 @@
 	}
 
 	// intialize
-	bgx.init = function (initialState = {}, events = {}, updaters = {}, presets = []) {
+	bgx.init = function(initialState = {}, events = {}, updaters = {}, presets = []) {
+		bgx.globalEvents  = 'event' in window;
 		bgx.dom           = {};
 		bgx.state         = initialState;
 		bgx.dispatcher    = events;
@@ -34,9 +35,9 @@
 	bgx.dispatch = function(fn, args) {
 		bgx.dispatcher[fn] && bgx.dispatcher[fn].apply(event.target, args); // set "this" to the dom element firing the event
 	};
-	bgx.fire = function() {
+	bgx.fire = function(...args) {
 		console.time('update'); // benchmarks, woohoo!
-		[].map.call(arguments, (arg, i) => {
+		args.map((arg, i) => {
 			if ( typeof arg === 'string' ) {
 				bgx.dispatch(arg);
 			} else if ( typeof arg === 'object' ) {
@@ -63,29 +64,53 @@
 	};
 
 	// track all elements with bgx attributes
-	bgx.hydrate = function(targets = $('[bgx-map]')) {
+	bgx.hydrate = function(targets = $('[bgx-map], [bgx]')) {
+		console.time('hydrate');
 		[].map.call(targets, el => {
-			var bgxId = el.getAttribute('bgx') || (Date.now() + Math.random().toString());
-			el.bgxId = bgxId;
+			el.bgxId = el.getAttribute('bgx') || (Date.now() + Math.random().toString());
 			el.map = JSON.parse(el.getAttribute('bgx-map') || '{}');
-			var subscriptions = new Set(Object.values(el.map));
-			var updater = el.getAttribute('bgx-updater'); // specify name of an update method
-			el.update = updater ? bgx.updaters[updater] : function(state) { // default update strategy
-				Object.keys(this.map).map(attr => {
-					var keys = attr.split('.');
-					var values = this.map[attr].split('.');
-					var deepKey = keys.slice(-1); 
-					var deepThis = keys.slice(0, -1).reduce((o, i) => o[i], this);
-					var deepValue = values.reduce((p, j) => p[j], state);
-					deepThis[deepKey] = deepValue;
-				});
-			};
-			bgx.dom[bgxId] = el;
-			subscriptions && subscriptions.forEach(s => {
-				bgx.subscriptions[s] = bgx.subscriptions[s] || new Set();
-				bgx.subscriptions[s].add(bgxId);
-			});
+			setUpdater(el);
+			setSubscriptions(el);
+			requireGlobalEvents(el);
+			bgx.dom[el.bgxId] = el;
 			el.update(bgx.state);
+		});
+		console.timeEnd('hydrate');
+	}
+
+	// hydration helpers:
+	function genericUpdater(state) { // default update strategy
+		Object.keys(this.map).map(attr => {
+			var keys = attr.split('.');
+			var values = this.map[attr].split('.');
+			var deepKey = keys.slice(-1); 
+			var deepThis = keys.slice(0, -1).reduce((o, i) => o[i], this);
+			var deepValue = values.reduce((p, j) => p[j], state);
+			deepThis[deepKey] = deepValue;
+		});
+	};
+	
+	function requireGlobalEvents(el) {
+		if ( !bgx.globalEvents ) {
+			for (prop in el) {
+				if ( el[prop] && prop.slice(0, 2) === 'on' && typeof el[prop] === 'function' ) {
+					var oldFn = el[prop];
+					el[prop] = function(event) { window.event = event; oldFn(event); };
+				}
+			}
+		}
+	}
+	
+	function setUpdater(el) {
+		var updater = el.getAttribute('bgx-updater'); // specify name of an update method
+		el.update = updater ? bgx.updaters[updater] : genericUpdater;
+	}
+	
+	function setSubscriptions(el) {
+		var subscriptions = new Set(Object.values(el.map));
+		subscriptions && subscriptions.forEach(s => {
+			bgx.subscriptions[s] = bgx.subscriptions[s] || new Set();
+			bgx.subscriptions[s].add(el.bgxId);
 		});
 	}
 })();

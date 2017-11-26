@@ -1,5 +1,6 @@
 <html>
 <head>
+	<meta charset="utf-8" />
 	<style>
 		body {
 			margin: 0;
@@ -34,6 +35,8 @@
 	</style>
 	<script src="./bgx.js" ></script>
 </head>
+
+
 <body>
 	<div bgx-map='{"style.color": "style.color"}'>
 		<span>Hi, </span><span bgx="intro" bgx-map='{"innerText": "name"}'></span>
@@ -54,9 +57,9 @@
 		<input onkeyup="bgx.fire('NAME')" placeholder="Your Name Here..." />
 	</div>
 	<div>
-		<span onclick="bgx.fire({ 'SET_COLOR':['blue'] })" >Blue</span>
-		<span onclick="bgx.fire({ 'SET_COLOR':['red'] })"  >Red</span>
-		<span onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
+		<span bgx onclick="bgx.fire(event, { 'SET_COLOR':['blue'] })">Blue</span>
+		<span bgx onclick="bgx.fire({ 'SET_COLOR':['red'] })"   >Red</span>
+		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
 	</div>
 	<div>
 		<ul bgx="ul" bgx-map='{"1": "history"}' bgx-updater="HISTORY">
@@ -77,6 +80,8 @@
 		</div>
 	</div>
 	</div>
+	
+
 	<script>
 		const renderTodo = (item, idx) => {
 			return `
@@ -135,7 +140,6 @@
 				bgx.setState({ todos: [...bgx.state.todos, newTodo]});
 			},
 			'MAYBE_ADD_TODO': function() {
-				debugger;
 				if ( event.key === 'Enter' ) { bgx.fire('ADD_TODO') }
 			},
 			'APPLY_FILTER': function() {
@@ -160,7 +164,9 @@
 			},
 		};
 
+		console.time('init');
 		bgx.init(initialState, events, updaters);
+		console.timeEnd('init');
 	</script>
 </body>
 </html>
