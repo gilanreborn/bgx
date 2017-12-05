@@ -22,20 +22,21 @@
 	}
 
 	// intialize
-	bgx.init = function(initialState = {}, events = {}, updaters = {}, presets = []) {
-		bgx.globalEvents  = 'event' in window;
+	bgx.init = function(initialState = {}, events = {}, updaters = {}, presets = [], autohydrate = false) {
+		bgx.globalEvents  = false;
+		bgx.uuid          = bgx.uuid || 0;
 		bgx.dom           = {};
 		bgx.state         = initialState;
 		bgx.dispatcher    = events;
 		bgx.subscriptions = {};
 		bgx.updaters      = updaters;
 		bgx.queue         = new Set();
-		bgx.hydrate();
+		autohydrate && bgx.hydrate();
 	};
 	bgx.dispatch = function(fn, args) {
 		bgx.dispatcher[fn] && bgx.dispatcher[fn].apply(event.target, args); // set "this" to the dom element firing the event
 	};
-	bgx.fire = function(...args) {
+	bgx.fire = function(event, ...args) {
 		console.time('update'); // benchmarks, woohoo!
 		args.map((arg, i) => {
 			if ( typeof arg === 'string' ) {
@@ -51,6 +52,7 @@
 	bgx.setState = function(nextState) {
 		var updates = keyStrings(nextState);
 		bgx.state = Object.assign({}, bgx.state, nextState);
+		bgx.viewState = {};
 		updates.map(u => bgx.subscriptions[u].forEach(s => bgx.queue.add(s)));
 	};
 	bgx.update = function() { // async so that multiple state changes trigger only one render;
@@ -66,8 +68,9 @@
 	// track all elements with bgx attributes
 	bgx.hydrate = function(targets = $('[bgx-map], [bgx]')) {
 		console.time('hydrate');
-		[].map.call(targets, el => {
-			el.bgxId = el.getAttribute('bgx') || (Date.now() + Math.random().toString());
+		[...targets].map(el => {
+			el.bgxId = el.getAttribute('bgx') || bgx.uuid++;
+			debugger;
 			el.map = JSON.parse(el.getAttribute('bgx-map') || '{}');
 			setUpdater(el);
 			setSubscriptions(el);
@@ -92,12 +95,13 @@
 	
 	function requireGlobalEvents(el) {
 		if ( !bgx.globalEvents ) {
-			for (prop in el) {
-				if ( el[prop] && prop.slice(0, 2) === 'on' && typeof el[prop] === 'function' ) {
+			debugger;
+			Array.prototype.map.call(el.attributes, prop => {
+				if ( prop.name.slice(0, 2) === 'on' && typeof el[prop] === 'function' ) {
 					var oldFn = el[prop];
 					el[prop] = function(event) { window.event = event; oldFn(event); };
 				}
-			}
+			});
 		}
 	}
 	

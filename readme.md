@@ -1,10 +1,12 @@
+todo: state.derivedvalues
+
 DOCUMENTATION
 
 BGX is a front end state and view management library inspired by react and redux. Where those libraries are considered javascript frameworks, however, BGX is more of a decorator. BGX does not insist on controlling the whole DOM -- it only wants to make certain nodes with a bgx-map attribute responsive. This allows it to jump into a project with a lot of legacy code and make an impact right away, without having to download a dozen dependencies or bloat the package size. Here's how it works:
 
 BGX-STATE
 
-BGX stores the app state in a plain javascript object called bgx.state. This global object should be the single source of truth for your app's view layer -- or the part of the view layer that bgx is responsible for. DOM events such as clicks, drags, keyups, and form submits will call bgx.fire(), giving a list of events (or event objects) whose names correspond to functions defined in the bgx.dispatcher object.
+BGX stores the app state in a plain javascript object called bgx.state. This global object should be the single source of truth for your app's view layer -- or,   the part of the view layer for which bgx is responsible. DOM events such as clicks, drags, keyups, and form submits will call bgx.fire(), giving a list of events (or event objects) whose names correspond to functions defined in the bgx.dispatcher object.
 
 BGX-EVENT
 

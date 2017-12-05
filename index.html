@@ -36,8 +36,8 @@
 	<script src="./bgx.js" ></script>
 </head>
 
-
 <body>
+	<input type="date" />
 	<div bgx-map='{"style.color": "style.color"}'>
 		<span>Hi, </span><span bgx="intro" bgx-map='{"innerText": "name"}'></span>
 	</div>
@@ -57,8 +57,8 @@
 		<input onkeyup="bgx.fire('NAME')" placeholder="Your Name Here..." />
 	</div>
 	<div>
-		<span bgx onclick="bgx.fire(event, { 'SET_COLOR':['blue'] })">Blue</span>
-		<span bgx onclick="bgx.fire({ 'SET_COLOR':['red'] })"   >Red</span>
+		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['blue'] })">Blue</span>
+		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['red'] })" >Red</span>
 		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
 	</div>
 	<div>
@@ -71,7 +71,7 @@
 			<ul bgx-map='["todos", "filter"]' bgx-updater="FILTER_TODOS"></ul>
 		</div>
 		<div class="todo-controls">
-			<input bgx="todoInput" bgx-map onkeyup="bgx.fire('MAYBE_ADD_TODO')"/>
+			<input bgx="todoInput" bgx-map onkeyup="(event) => bgx.fire('MAYBE_ADD_TODO': [event])"/>
 			<button onclick="bgx.fire('ADD_TODO')">ADD TODO</button>
 		</div>
 		<div class="todo-filters">
@@ -165,7 +165,7 @@
 		};
 
 		console.time('init');
-		bgx.init(initialState, events, updaters);
+		bgx.init(initialState, events, updaters, [], true);
 		console.timeEnd('init');
 	</script>
 </body>
