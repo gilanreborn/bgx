@@ -62,16 +62,16 @@
 		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
 	</div>
 	<div>
-		<ul bgx="ul" bgx-map='{"1": "history"}' bgx-updater="HISTORY">
+		<ul bgx="ul" bgx-map='["history"]' bgx-component="HISTORY">
 		</ul>
 	</div>
 	<div class="todos">
 		<h1 bgx-map='{"style.color": "style.color"}'>TODOS:</h1>
 		<div class="todo-list">
-			<ul bgx-map='["todos", "filter"]' bgx-updater="FILTER_TODOS"></ul>
+			<ul bgx-map='["todos", "filter"]' bgx-component='TODOS'></ul>
 		</div>
 		<div class="todo-controls">
-			<input bgx="todoInput" bgx-map onkeyup="(event) => bgx.fire('MAYBE_ADD_TODO': [event])"/>
+			<input bgx="todoInput" bgx-map='{"value": "todoInput"}' onkeyup="bgx.fire('MAYBE_ADD_TODO')"/>
 			<button onclick="bgx.fire('ADD_TODO')">ADD TODO</button>
 		</div>
 		<div class="todo-filters">
@@ -83,21 +83,11 @@
 	
 
 	<script>
-		const renderTodo = (item, idx) => {
-			return `
-				<li bgx-key="${idx}"
-					onclick="bgx.fire({ 'TOGGLE_TODO_VIEW': [${idx}] })"
-					class="${item.done ? 'done' : 'todo'}"
-				>
-					${item.text}
-				</li>
-			`;
-		};
-
 		const initialState = { // initial state
 			history: [],
 			todos: [],
 			filter: '',
+			todoInput: '',
 			counter: 0,
 			name: "Gilan",
 			style: { color: "blue" }
@@ -137,9 +127,10 @@
 			'ADD_TODO': function() {
 				var text = bgx.dom.todoInput.value;
 				var newTodo = { text, done: false };
-				bgx.setState({ todos: [...bgx.state.todos, newTodo]});
+				bgx.setState({ todos: [...bgx.state.todos, newTodo], todoInput: '' });
 			},
 			'MAYBE_ADD_TODO': function() {
+				bgx.setState({ todoInput: event.target.value });
 				if ( event.key === 'Enter' ) { bgx.fire('ADD_TODO') }
 			},
 			'APPLY_FILTER': function() {
@@ -148,24 +139,36 @@
 			},
 		};
 
-		const updaters = { // updaters
-			'HISTORY': function(state) {
-				var children = state.history.map(item => `<li>${item}</li>`);
-				this.innerHTML = children.join('');
+		const components = {
+			'HISTORY': {
+				update({ el, state }) {
+					var children = state.history.map(item => `<li>${item}</li>`);
+					el.innerHTML = children.join('');
+				}
 			},
-			'TODOS': function(state) {
-				var todoList = state.todos.map(renderTodo);
-				this.innerHTML = todoList.join('');
+			'TODOS': {
+				renderTodo(item, idx) {
+					return `
+						<li bgx-key="${idx}"
+							onclick="bgx.fire({ 'TOGGLE_TODO_VIEW': [${idx}] })"
+							class="${item.done ? 'done' : 'todo'}"
+						>
+							${item.text}
+						</li>
+					`;
+				},
+				filterTodos(state) {
+					const { todos, filter } = state;
+					return todos.filter(todo => todo.text.indexOf(filter) > -1);
+				},
+				update({ el, state }) {
+					el.innerHTML = this.filterTodos(state).map(this.renderTodo).join('');
+				},
 			},
-			'FILTER_TODOS': function(state) {
-				var filt = state.filter;
-				var todoList = state.todos.filter(todo => todo.text.indexOf(filt) > -1).map(renderTodo);
-				this.innerHTML = todoList.join('');
-			},
-		};
+		}
 
 		console.time('init');
-		bgx.init(initialState, events, updaters, [], true);
+		bgx.init(initialState, events, components, [], true);
 		console.timeEnd('init');
 	</script>
 </body>

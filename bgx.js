@@ -22,21 +22,27 @@
 	}
 
 	// intialize
-	bgx.init = function(initialState = {}, events = {}, updaters = {}, presets = [], autohydrate = false) {
+	bgx.init = function(
+		initialState = {}, 
+		events = {}, 
+		components = {}, 
+		presets = [], 
+		autohydrate = false
+	) {
 		bgx.globalEvents  = false;
 		bgx.uuid          = bgx.uuid || 0;
 		bgx.dom           = {};
 		bgx.state         = initialState;
 		bgx.dispatcher    = events;
 		bgx.subscriptions = {};
-		bgx.updaters      = updaters;
+		bgx.components    = components;
 		bgx.queue         = new Set();
 		autohydrate && bgx.hydrate();
 	};
 	bgx.dispatch = function(fn, args) {
 		bgx.dispatcher[fn] && bgx.dispatcher[fn].apply(event.target, args); // set "this" to the dom element firing the event
 	};
-	bgx.fire = function(event, ...args) {
+	bgx.fire = function(...args) {
 		console.time('update'); // benchmarks, woohoo!
 		args.map((arg, i) => {
 			if ( typeof arg === 'string' ) {
@@ -62,15 +68,23 @@
 				el.update(bgx.state);
 			});
 			bgx.queue = new Set();
+			window.event = undefined;
 		}, 0);
 	};
 
+	function bgxComponent(el, options) { // factory function
+		return Object.assign({}, { el }, options);
+	}
+
 	// track all elements with bgx attributes
-	bgx.hydrate = function(targets = $('[bgx-map], [bgx]')) {
+	bgx.hydrate = function(targets = $('[bgx], [bgx-map], [bgx-component]')) {
 		console.time('hydrate');
 		[...targets].map(el => {
 			el.bgxId = el.getAttribute('bgx') || bgx.uuid++;
-			debugger;
+			var component = el.getAttribute('bgx-component');
+			if (component) { 
+				el.component = bgxComponent(el, bgx.components[component]) 
+			};
 			el.map = JSON.parse(el.getAttribute('bgx-map') || '{}');
 			setUpdater(el);
 			setSubscriptions(el);
@@ -95,23 +109,31 @@
 	
 	function requireGlobalEvents(el) {
 		if ( !bgx.globalEvents ) {
-			debugger;
-			Array.prototype.map.call(el.attributes, prop => {
-				if ( prop.name.slice(0, 2) === 'on' && typeof el[prop] === 'function' ) {
-					var oldFn = el[prop];
-					el[prop] = function(event) { window.event = event; oldFn(event); };
+			[].map.call(el.attributes, prop => {
+				if ( prop.name.slice(0, 2) === 'on' && typeof el[prop.name] === 'function' ) {
+					var oldFn = el[prop.name];
+					el[prop.name] = function(event) {
+						window.event = event;
+						oldFn(event);
+					};
 				}
 			});
 		}
 	}
-	
+
 	function setUpdater(el) {
-		var updater = el.getAttribute('bgx-updater'); // specify name of an update method
-		el.update = updater ? bgx.updaters[updater] : genericUpdater;
+		el.update = el.component ? function(state) { el.component.update({ el, state }); } : genericUpdater;
 	}
-	
+
 	function setSubscriptions(el) {
-		var subscriptions = new Set(Object.values(el.map));
+		var componentLevelSubs = [];
+		if ( el.component ) {
+			componentLevelSubs = el.component.subscriptions || [];
+		}
+		var subscriptions = new Set([
+			...Object.values(el.map),
+			...componentLevelSubs,
+		]);
 		subscriptions && subscriptions.forEach(s => {
 			bgx.subscriptions[s] = bgx.subscriptions[s] || new Set();
 			bgx.subscriptions[s].add(el.bgxId);
