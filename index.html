@@ -33,6 +33,7 @@
 			text-decoration: line-through;
 		}
 	</style>
+	<script src="./vnode.js"></script>
 	<script src="./bgx.js" ></script>
 </head>
 
@@ -57,7 +58,7 @@
 		<input onkeyup="bgx.fire('NAME')" placeholder="Your Name Here..." />
 	</div>
 	<div>
-		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['blue'] })">Blue</span>
+		<span bgx onclick="bgx.fire(event, { 'SET_COLOR': ['blue'] })">Blue</span>
 		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['red'] })" >Red</span>
 		<span bgx onclick="bgx.fire({ 'SET_COLOR': ['green'] })">Green</span>
 	</div>
@@ -71,12 +72,12 @@
 			<ul bgx-map='["todos", "filter"]' bgx-component='TODOS'></ul>
 		</div>
 		<div class="todo-controls">
-			<input bgx="todoInput" bgx-map='{"value": "todoInput"}' onkeyup="bgx.fire('MAYBE_ADD_TODO')"/>
-			<button onclick="bgx.fire('ADD_TODO')">ADD TODO</button>
+			<input bgx="todoInput" bgx-map='{"value": "todoInput"}' onkeyup="bgx.fire(event, 'MAYBE_ADD_TODO')"/>
+			<button onclick="bgx.fire(event, 'ADD_TODO')">ADD TODO</button>
 		</div>
 		<div class="todo-filters">
 			<span>Filter Todos:</span>
-			<input bgx-map='{"value": "filter"}' onkeyup="bgx.fire('APPLY_FILTER')" />
+			<input bgx-map='{"value": "filter"}' onkeyup="bgx.fire(event, 'APPLY_FILTER')" />
 		</div>
 	</div>
 	</div>
