@@ -15,3 +15,7 @@ body {
 .preview {
 	color: gray;
 }
+
+.todos li:hover {
+	cursor: pointer;
+}

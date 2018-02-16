@@ -1,21 +1,26 @@
-import {Todo} from './components/todo.js';
-import {Input} from './components/input.js';
-import {Actions} from './actions/actions.js';
+import { createStore } from '/reduxLite/reduxLite.js';
+import { rootReducer } from '/reducers/root.js';
+import { Todo } from '/components/todo.js';
+import { Input } from '/components/input.js';
 
 var root = document.querySelector('#root');
 var jsn = root.getAttribute('data-mith');
 var initialState = JSON.parse(jsn);
-var state = window.state = initialState;
+
+var store = createStore(rootReducer);
 
 const Todos = {
 	view: function (vnode) {
-		const todos = state.todos.map((t, i) => m(Todo, t));
+		const { todoInput, todos } = window.store.state;
+		const todosList = todos.map((t, i) => m(Todo, t));
 		return m('main', [
 			m(Input),
-			m('ul', 'TODOs:', todos),
-			m('div.preview', state.todoInput),
+			m('ul.todos', 'TODOs:', todosList),
+			m('div.preview', todoInput),
 		]);
 	}
 };
+
+
 
 m.mount(root, Todos);

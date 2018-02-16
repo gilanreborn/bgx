@@ -1,27 +1,28 @@
-var uuid = 1;
+import { dispatcher } from '/reduxLite/reduxLite.js';
 
-const Actions = {
-	toggleTodo: (e) => {
-		var key = e.target.dataset.key;
-		var nextState = state.todos.map(t => t.key == key ? { ...t, done: !t.done } : t);
-		state.todos = nextState;
-	},
-	updateTodoInput: (e) => {
-		var val = e.target.value;
-		if (e.which === 13) {
-			Actions.addTodo(val);
-			state.todoInput = '';
-		} else {
-			state.todoInput = val;
-		}
-	},
-	addTodo: (text) => {
-		state.todos = [...state.todos, {
-			text,
-			done: false,
-			key: uuid++
-		}];
-	},
+export const toggleTodo = (e) => {
+	var key = e.target.dataset.key;
+	var action = { 
+		type: 'TOGGLE_TODO',
+		payload: { key },
+	};
+	dispatcher.fire(action);
 };
 
-export { Actions };
+export const updateTodoInput = (e) => {
+	var value = e.target.value;
+	var keyCode = e.which;
+	var action = {
+		type: 'UPDATE_TODO_INPUT',
+		payload: { keyCode, value },
+	};
+	dispatcher.fire(action);
+};
+
+export const addTodo = (text) => {
+	var action = {
+		type: 'ADD_TODO',
+		payload: { text },
+	};
+	dispatcher.fire(action);
+};

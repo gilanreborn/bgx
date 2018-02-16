@@ -1,12 +1,18 @@
-import { Actions } from '../actions/actions.js';
+import { addTodo, updateTodoInput } from '/actions/actions.js';
 
 const Input = {
-	view: function () {
+	updateInput: function (e) {
+		var val = e.target.value;
+		if (e.which === 13) { addTodo(val); }
+		updateTodoInput(e);
+	},
+	view: function (v) {
+		const { todoInput } = window.store.state;
 		return m('input', {
-			onkeyup: Actions.updateTodoInput,
-			value: state.todoInput
-		}, state.todoInput);
+			onkeyup: this.updateInput,
+			value: todoInput
+		}, todoInput);
 	}
 };
 
-export { Input }
+export { Input };
